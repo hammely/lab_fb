@@ -20,7 +20,24 @@ services:
       retries: 20
     networks:
       - lab_net
-
+ 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: lab_phpmyadmin
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: app
+      PMA_PASSWORD: app_password
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8081:80"
+    networks:
+      - lab_net
+  
   kafka:
     image: apache/kafka:3.7.0
     container_name: lab_kafka
@@ -72,7 +89,7 @@ services:
       - lab_net
 
   rabbitmq:
-    image: rabbitmq:3.13-management
+    image: rabbitmq:3.10.7-management
     container_name: lab_rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: guest
