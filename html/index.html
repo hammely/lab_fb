@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оформление заказа</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #eef2f7 0%, #d9e4f0 100%);
+            color: #1f2937;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 460px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 36px 32px;
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.04),
+                0 12px 32px rgba(31, 41, 55, 0.08);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            text-align: center;
+            color: #111827;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 28px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #4b5563;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 11px 14px;
+            font-size: 15px;
+            color: #1f2937;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+
+        input::placeholder { color: #9ca3af; }
+
+        input:focus {
+            background: #ffffff;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px 16px;
+            margin-top: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            background: #4a90e2;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
+        }
+
+        button:hover:not(:disabled) {
+            background: #3a7bc8;
+            box-shadow: 0 6px 16px rgba(74, 144, 226, 0.35);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.25);
+        }
+
+        button:disabled {
+            background: #a0c1e8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .message.success {
+            display: block;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .message.error {
+            display: block;
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Оформление заказа</h1>
+        <p class="subtitle">Заполните форму</p>
+
+        <form id="order-form">
+            <label for="customer">Покупатель</label>
+            <input type="text" id="customer" name="customer">
+
+            <label for="product">Товар</label>
+            <input type="text" id="product" name="product">
+
+            <label for="amount">Сумма</label>
+            <input type="number" id="amount" name="amount">
+
+            <button type="submit" id="submit-btn">Оформить заказ</button>
+        </form>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('order-form');
+        const btn = document.getElementById('submit-btn');
+        const message = document.getElementById('message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            message.className = 'message';
+            message.textContent = '';
+            btn.disabled = true;
+            btn.textContent = 'Отправка...';
+
+            const payload = {
+                customer: document.getElementById('customer').value.trim(),
+                product: document.getElementById('product').value.trim(),
+                amount: parseFloat(document.getElementById('amount').value)
+            };
+
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    message.className = 'message success';
+                    message.textContent = `✓ Заказ #${data.order_id} успешно создан`;
+                    form.reset();
+                } else {
+                    message.className = 'message error';
+                    message.textContent = data.error || 'Ошибка при создании заказа';
+                }
+            } catch (err) {
+                message.className = 'message error';
+                message.textContent = 'Ошибка сети: ' + err.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Оформить заказ';
+            }
+        });
+    </script>
+</body>
+</html>
